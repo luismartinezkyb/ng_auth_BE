@@ -1,0 +1,85 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  BadRequestException,
+} from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { CreateUserDto } from './dto/create-auth.dto';
+import { UpdateAuthDto } from './dto/update-auth.dto';
+import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-auth.dto';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post()
+  async create(@Body() createAuthDto: CreateUserDto) {
+    try {
+      const user = await this.authService.getUserByEmail(createAuthDto.email);
+
+      if (user) {
+        throw new BadRequestException('EMAIL_IN_USE');
+        // throw new UnauthorizedException('Not valid credentials -email');
+      }
+
+      return await this.authService.create(createAuthDto);
+    } catch (error) {
+      console.log(error);
+      if (error.message === 'EMAIL_IN_USE')
+        throw new BadRequestException(error.message);
+      throw new BadRequestException('Something went wrong');
+    }
+  }
+
+  @Post('/login')
+  login(@Body() loginUserDto: LoginUserDto) {
+    try {
+      return this.authService.login(loginUserDto);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Something went wrong');
+    }
+  }
+  @Post('/register')
+  async register(@Body() registerDto: RegisterUserDto) {
+    try {
+      const user = await this.authService.getUserByEmail(registerDto.email);
+
+      if (user) {
+        throw new BadRequestException('EMAIL_IN_USE');
+        // throw new UnauthorizedException('Not valid credentials -email');
+      }
+      return this.authService.register(registerDto);
+    } catch (error) {
+      console.log(error);
+      if (error.message === 'EMAIL_IN_USE')
+        throw new BadRequestException(error.message);
+      throw new BadRequestException('Something went wrong');
+    }
+  }
+  @Get()
+  findAll() {
+    return this.authService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.authService.findOne(+id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+    return this.authService.update(+id, updateAuthDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.authService.remove(+id);
+  }
+}
