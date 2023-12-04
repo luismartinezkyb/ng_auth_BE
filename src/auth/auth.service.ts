@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/auth.entity';
 import { Model } from 'mongoose';
@@ -75,17 +74,19 @@ export class AuthService {
     return await this.userModel.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  async findOne(id: string) {
+    const user = await this.userModel.findById(id)
+    user.set('password', undefined);
+    return user;
   }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
+  async findOneById(id: string) {
+    const user = await this.userModel.findById(id)
+    user.set('password', undefined);
+    return user;
   }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
+  // checkToken(){
+  //   return this.
+  // }
 
   getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);

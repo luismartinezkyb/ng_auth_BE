@@ -3,16 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   BadRequestException,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-auth.dto';
+import { AuthGuard } from './guards/auth.guard';
+import { Request as RequestHttp } from 'express';
+import { LoginResponse } from './interfaces/login-reponse.interface';
+import { User } from './entities/auth.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -63,23 +65,22 @@ export class AuthController {
       throw new BadRequestException('Something went wrong');
     }
   }
+  @UseGuards(AuthGuard)
   @Get()
-  findAll() {
+  findAll(@Request() req: RequestHttp) {
+    const user = req['user'];
+    // console.log(req);
+    return user;
     return this.authService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @UseGuards(AuthGuard)
+  @Get('/check-token')
+  async checkToken(@Request() req: RequestHttp): Promise<LoginResponse> {
+    const user = req['user'] as User;
+    return {
+      user,
+      token: this.authService.getJwtToken({ id: user._id }),
+    };
   }
 }
